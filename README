@@ -1,0 +1,19 @@
+
+A simple chat app using websockets and clojurescript.
+
+It's not really a fully-functional chat program, but it demonstrates
+how to use clojurescript to send and receives messages over a websocket,
+and display them on the screen.
+
+This app uses jquery instead of google libraries.  Chris Granger [[explains
+why this is OK][https://github.com/ibdknox/jayq]].
+
+To run:
+
+  lein cljsbuild once
+  lein run
+
+Then visit http://localhost:8080/ in as many different browser windows as
+you'd like.
+
+
