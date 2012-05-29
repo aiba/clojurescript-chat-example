@@ -1,8 +1,8 @@
 (ns cljs-chat-example.chat
-  (:use cljs-chat-example.ring-utils
-        [ring.middleware reload params resource file-info]
+  (:use [ring.middleware reload params resource file-info]
         [ring.adapter.jetty :only [run-jetty]]
-        [hiccup.page :only [include-js include-css]]
+        [hiccup.page :only [include-js include-css html5]]
+        [hiccup.element :only [javascript-tag]]
         [cssgen :only [css]])
   (:require [clj-json.core :as json]
             [clojure.string :as string])
@@ -12,8 +12,22 @@
            (org.webbitserver.handler StaticFileHandler)))
 
 ;===============================================================================
-; Regular Ring Handlers
+; Handling Ring Requests
 ;===============================================================================
+
+(defn include-cljs [path]
+  (list (javascript-tag "var CLOSURE_NO_DEPS = true;")
+        (include-js path)))
+
+(defn render-notfound [req]
+  {:status 404
+   :headers {"Content-Type" "text/plain"}
+   :body (str "path not found: " (:uri req))})
+
+(defmacro render-html5 [& elts]
+  `{:status 200
+    :headers {"Content-Type" "text/html; charset=UTF-8"}
+    :body (html5 ~@elts)})
 
 (defn- render-index [req]
   (render-html5
@@ -54,39 +68,34 @@
     (wrap-reload '(iteractive.chat))))
 
 ;===============================================================================
-; Webbit Handler
+; Webbit Handler / WebSockets
 ;===============================================================================
 
-; set of websoket connections
-(def ^:private websocket-conns* (ref #{}))
+(def ^:private ws-conns* (ref #{}))
 
-(defn- websocket-open [c]
-  (dosync (alter websocket-conns* conj c))
-  (println "websocket count:" (count @websocket-conns*)))
+(defn- ws-stats [] (println "websocket count:" (count @ws-conns*)))
 
-(defn- websocket-close [c]
-  (println "connection closed.  removing from set...")
-  (dosync (alter websocket-conns* disj c))
-  (println "(count websocket-conns*) ==> " (count @websocket-conns*)))
+(defn- ws-open [c]
+  (dosync (alter ws-conns* conj c))
+  (ws-stats))
 
-(defn- websocket-message [c m]
+(defn- ws-close [c]
+  (dosync (alter ws-conns* disj c))
+  (ws-stats))
+
+(defn- ws-message [c m]
   (println "websocket message:" m)
-  (let [mj (json/parse-string m)]
-    (let [msg (mj "m")]
-      (println "broadcasting...")
-      (doall
-        (for [c @websocket-conns*]
-          (do
-            (println "sending to" c)
-            (.send c
-                   (json/generate-string
-                     {"m" msg}))))))))
+  (let [mj (json/parse-string m)
+        msg (mj "m")]
+    (doall
+      (for [c @ws-conns*]
+        (.send c (json/generate-string {"m" msg}))))))
 
-(def ^:private websocket-handler*
+(def ^:private ws-handler*
   (proxy [WebSocketHandler] []
-    (onOpen [c] (websocket-open c))
-    (onClose [c] (websocket-close c))
-    (onMessage [c m] (websocket-message c m))))
+    (onOpen [c] (ws-open c))
+    (onClose [c] (ws-close c))
+    (onMessage [c m] (ws-message c m))))
 
 ;===============================================================================
 ; Main
@@ -97,6 +106,6 @@
   (run-jetty #'ring-app* {:port 8080 :join? false})
   (println "starting webbit server...")
   (doto (WebServers/createWebServer 8081)
-    (.add "/websocket" websocket-handler*)
+    (.add "/websocket" ws-handler*)
     (.start)))
 
