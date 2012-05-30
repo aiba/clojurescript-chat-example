@@ -5,8 +5,11 @@ It's not really a fully-functional chat program, but it demonstrates
 how to use clojurescript to send and receives messages over a websocket,
 and display them on the screen.
 
-This app uses jquery instead of google libraries.  Chris Granger explains
+This app uses jquery instead of google closure.  Chris Granger explains
 why this is OK: [ https://github.com/ibdknox/jayq ].
+
+It uses ring/jetty running on port 8080 to serve the normal HTTP requests, and
+Webbit running on port 8081 to handle the websocket connections.
 
 To run:
 
