@@ -9,10 +9,8 @@
                  [crate "0.2.0-alpha3"]
                  [jayq "0.1.0-alpha4"]
                  [org.mozilla/rhino "1.7R3"]
-
                  ; webbit / websocket
                  [org.webbitserver/webbit "0.4.7"]
-
                  ; css generation
                  [cssgen "0.3.0-alpha1"]]
   :cljsbuild {
