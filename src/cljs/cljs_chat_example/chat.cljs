@@ -1,4 +1,4 @@
-(ns iteractive.client.chat
+(ns cljs-chat-example.client.chat
   (:use [jayq.core :only [$]]
         [jayq.util :only [clj->js]])
   (:require [crate.core :as crate]))
