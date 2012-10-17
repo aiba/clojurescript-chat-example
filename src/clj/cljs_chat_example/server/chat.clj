@@ -1,4 +1,4 @@
-(ns cljs-chat-example.chat
+(ns cljs-chat-example.server.chat
   (:use [ring.middleware reload params resource file-info]
         [ring.adapter.jetty :only [run-jetty]]
         [hiccup.page :only [include-js include-css html5]]
@@ -36,8 +36,9 @@
      (include-css "/css")]
     [:body
      [:div#main "Loading..."]
-     (include-js "http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js")
-     (include-js "http://ajax.cdnjs.com/ajax/libs/json2/20110223/json2.js")
+     (apply include-js
+            ["//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.2/jquery.js"
+             "//cdnjs.cloudflare.com/ajax/libs/json2/20110223/json2.js"])
      (include-cljs "/js/main.js")]))
 
 (defn- render-css [req]

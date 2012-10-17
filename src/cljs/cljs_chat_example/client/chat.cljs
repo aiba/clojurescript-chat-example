@@ -1,4 +1,4 @@
-(ns cljs-chat-example.client.chat
+(ns cljs-chat-example.client.client.chat
   (:use [jayq.core :only [$]]
         [jayq.util :only [clj->js]])
   (:require [crate.core :as crate]))
@@ -19,10 +19,10 @@
 
 ;===============================================================================
 
-(def websocket* nil)
+(def websocket* (atom nil))
 
 (defn- send-chat-msg [m]
-  (.send websocket* (toJSON {:m m}))
+  (.send @websocket* (toJSON {:m m}))
   (.focus ($ "#chatinput")))
 
 (defn- receive-chat-msg [m]
@@ -33,9 +33,10 @@
 (defn- main []
   (log "main")
   (log "establishing websocket...")
-  (set! websocket* (new (.-WebSocket js/window) "ws://localhost:8081/websocket"))
+  (reset! websocket* (new (.-WebSocket js/window)
+                          "ws://localhost:8081/websocket"))
   (doall
-    (map #(aset websocket* (first %) (second %))
+    (map #(aset @websocket* (first %) (second %))
          [["onopen" (fn [] (log "OPEN"))]
           ["onclose" (fn [] (log "CLOSE"))]
           ["onerror" (fn [e] (log (str "ERROR:" e)))]
@@ -46,8 +47,8 @@
                            (receive-chat-msg m)))]]))
   (.unload ($ js/window)
            (fn []
-             (.close websocket*)
-             (set! websocket* nil)))
+             (.close @websocket*)
+             (set! @websocket* nil)))
   (log "websocket loaded.")
   (.html ($ "#main")
          (crate/html
@@ -70,6 +71,5 @@
         (fn []
           (log "ready...")
           (main)))
-
 
 
