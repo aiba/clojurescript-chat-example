@@ -1,4 +1,4 @@
-(ns cljs-chat-example.client.client.chat
+(ns cljs-chat-example.client.chat
   (:use [jayq.core :only [$]]
         [jayq.util :only [clj->js]])
   (:require [crate.core :as crate]))
@@ -33,8 +33,7 @@
 (defn- main []
   (log "main")
   (log "establishing websocket...")
-  (reset! websocket* (new (.-WebSocket js/window)
-                          "ws://localhost:8081/websocket"))
+  (reset! websocket* (js/WebSocket. "ws://localhost:8081/websocket"))
   (doall
     (map #(aset @websocket* (first %) (second %))
          [["onopen" (fn [] (log "OPEN"))]
@@ -48,7 +47,7 @@
   (.unload ($ js/window)
            (fn []
              (.close @websocket*)
-             (set! @websocket* nil)))
+             (reset! @websocket* nil)))
   (log "websocket loaded.")
   (.html ($ "#main")
          (crate/html
@@ -71,5 +70,4 @@
         (fn []
           (log "ready...")
           (main)))
-
 

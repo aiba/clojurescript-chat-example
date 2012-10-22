@@ -2,8 +2,7 @@
   (:use [ring.middleware reload params resource file-info]
         [ring.adapter.jetty :only [run-jetty]]
         [hiccup.page :only [include-js include-css html5]]
-        [hiccup.element :only [javascript-tag]]
-        [cssgen :only [css]])
+        [hiccup.element :only [javascript-tag]])
   (:require [clj-json.core :as json]
             [clojure.string :as string])
   (:import (org.webbitserver WebServer
@@ -14,10 +13,6 @@
 ;===============================================================================
 ; Handling Ring Requests
 ;===============================================================================
-
-(defn include-cljs [path]
-  (list (javascript-tag "var CLOSURE_NO_DEPS = true;")
-        (include-js path)))
 
 (defn render-notfound [req]
   {:status 404
@@ -36,23 +31,19 @@
      (include-css "/css")]
     [:body
      [:div#main "Loading..."]
-     (apply include-js
-            ["//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.2/jquery.js"
-             "//cdnjs.cloudflare.com/ajax/libs/json2/20110223/json2.js"])
-     (include-cljs "/js/main.js")]))
+     (include-js "//cdnjs.cloudflare.com/ajax/libs/jquery/1.8.2/jquery.js"
+                 "//cdnjs.cloudflare.com/ajax/libs/json2/20110223/json2.js"
+                 "/js/gen/dev/goog/base.js"
+                 "/js/gen/dev/main.js")
+     (javascript-tag "goog.require('cljs_chat_example.client.chat')")]))
 
 (defn- render-css [req]
   {:status 200
    :headers {"Content-Type" "text/css"}
-   :body
-   (css
-     [:body :padding 0 :margin 0]
-     [:#main :margin "2em"]
-     [:p :padding 0
-         :margin 0
-         :border "1px solid #ddd"]
-     [:input :display :block
-             :width "100%"])})
+   :body "body {padding: 0; margin: 0;}
+          #main {margin: 2em;}
+          p {padding:0; margin:0; border: 1px solid #ddd;}
+          input {display: block; width: 100%;}"})
 
 (defn- ring-handler [req]
   (let [hf (case (req :uri)
@@ -63,7 +54,7 @@
 
 (def ^:private ring-app*
   (-> #'ring-handler
-    (wrap-resource "gen/dev")
+    (wrap-resource "web")
     (wrap-file-info)
     (wrap-params)
     (wrap-reload '(iteractive.chat))))
